@@ -23,6 +23,9 @@ jobs:
         run: node --version
       - name: Test
         run: node --test tests/
+      - name: Release gate (artifacts / secrets / version)
+        if: matrix.node == 22
+        run: node tools/check-release.mjs --skip-tests
       - name: CLI help
         run: node bin/sweep.mjs --help
       - name: Refuse a catch-all pattern
