@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.2 — 2026-10-22
+
+CI 修复。插件行为未变。
+
+- **Bug:** `node --test tests/` 在 Node 22/24（Linux 与 Windows）上会把 `tests` 目录当成
+  模块加载，报 `MODULE_NOT_FOUND` —— 2026-10-22 那次推送的四个 CI job 全红。
+- 新增 `tools/test.mjs` 作为唯一测试入口：显式文件列表（绕开目录参数在各版本上的差异），
+  默认**进程内**加载（绕开 `node --test` 的 fork 与受限沙箱的管道限制），`--fork` 保留
+  逐文件隔离模式。`npm test`、CI、`tools/check-release.mjs` 的测试门都改为调用它。
+- 文档同步：README / README.en / AGENTS 不再教 `node --test tests/`，并把这次事故写进
+  AGENTS 的「改完必须自证」。
+
 ## 0.1.1 — 2026-10-22
 
 Hardening pass after a self-review. No behaviour change for correctly configured

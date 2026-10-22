@@ -1,6 +1,6 @@
 {
   "name": "dsh-temp-sweep",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Reclaim DSH Session scratch residue at Host start: deletes dsh-workspace-changes-* directories that provably belong to a dead Host process, plus a conservative idle fallback.",
   "license": "MIT",
   "author": "jimku233",
@@ -46,7 +46,7 @@
     }
   },
   "scripts": {
-    "test": "node --test tests/"
+    "test": "node tools/test.mjs"
   },
   "keywords": [
     "dsh",

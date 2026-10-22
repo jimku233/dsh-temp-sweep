@@ -161,14 +161,16 @@ node bin/sweep.mjs --assume-no-host      # 明确知道没有 Host 在跑时才�
 ## 测试
 
 ```bash
-node --test tests/
+node tools/test.mjs          # 等价于 npm test
+node tools/test.mjs --fork   # 逐文件隔离（走 node --test），仅普通环境可用
 ```
 
-24 个用例，覆盖两条规则、保护窗口、删除上限、junction 跳过、只读 git 对象、标记修剪。
+34 个用例，覆盖两条规则与边界、保护窗口优先级、删除上限、junction 跳过、只读 git 对象、
+标记剪枝与坏文件容错、缺失 root、盘根拒绝、catch-all 拒绝、CLI 参数校验。
 测试全部在临时目录里造真实树，绝不触碰真实 `%TEMP%`。
 
-（注意：在 DSH 沙箱内 `node --test` 会因为子进程管道被拒而失败，改用
-`node tests/sweep.test.mjs` 逐个文件在进程内跑。）
+> 不要用 `node --test tests/`：Node 22/24 会把 `tests` 当模块加载并报 `MODULE_NOT_FOUND`。
+> 统一入口是 `tools/test.mjs`（显式文件列表，默认进程内加载，所以沙箱里也能跑）。
 
 ## 已知限制
 

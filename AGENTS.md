@@ -32,11 +32,15 @@
 ## 改完必须自证
 
 ```bash
-node --test tests/                 # 34 例（Node 22+）
+node tools/test.mjs                # 34 例；默认进程内加载，本地/CI/沙箱行为一致
+node tools/test.mjs --fork         # 逐文件隔离（`node --test`），只在普通环境可用
 node tools/check-release.mjs       # 四道门：生成物 / 敏感串（含全历史）/ 版本一致 / 测试
 ```
 
-- 沙箱里 `node --test` 可能因禁止子进程管道而失败，改跑 `node tests/sweep.test.mjs` 等单文件。
+- **不要用 `node --test tests/`**：Node 22/24 会把 `tests` 当模块加载，报 `MODULE_NOT_FOUND`
+  —— 2026-10-22 那次推送因此四个 CI job 全红，改用 `tools/test.mjs` 后才绿。
+- `tools/test.mjs` 默认在本进程内 import 各测试文件，因为 `node --test` 会 fork 子进程，
+  而受限沙箱禁止子进程管道（EPERM）。
 - `check-release.mjs` 需要能调用 `git`，请在普通终端或 CI 里跑。
 - 改规则必须同时改 `tests/sweep.test.mjs` 里的边界用例；改配置必须同步 README 两张表与
   README.en.md。
@@ -50,7 +54,7 @@ node tools/check-release.mjs       # 四道门：生成物 / 敏感串（含全�
 ### 0. 前置：发布门必须先过
 
 ```bash
-node --test tests/
+node tools/test.mjs
 node tools/check-release.mjs        # 生成物 / 敏感串（含全历史）/ 版本一致 / 测试
 ```
 
@@ -149,6 +153,7 @@ dsh-temp-sweep/               ← 仓库根
 ├── bin/sweep.mjs             # CLI：默认 dry run
 ├── scripts/                  # install / uninstall / verify
 ├── tests/                    # 34 例
+├── tools/test.mjs            # 可移植测试入口（npm test 走它）
 ├── tools/check-release.mjs   # 发布前四道门
 └── .github/workflows/test.yml
 ```

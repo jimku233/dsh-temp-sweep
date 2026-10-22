@@ -19,7 +19,7 @@
  */
 
 import { execFileSync } from 'node:child_process';
-import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -145,32 +145,27 @@ for (const must of ['node_modules/', '_probe/']) {
 if (SKIP_TESTS) {
   say('  4/4 测试：跳过（--skip-tests）');
 } else {
-  // Pass the files explicitly: `node --test <dir>` resolves differently across
-  // Node majors, and an explicit list is the one form that works on 22, 24, and
-  // on Windows without shell globbing.
-  const testFiles = readdirSync(join(ROOT, 'tests'))
-    .filter((name) => name.endsWith('.test.mjs'))
-    .sort()
-    .map((name) => join('tests', name));
-
-  if (testFiles.length === 0) {
-    bad('测试', 'tests/ 下没有找到 *.test.mjs');
+  // Single source of truth for how tests run: tools/test.mjs lists the files
+  // explicitly and falls back to in-process loading where forking is forbidden.
+  const runner = join('tools', 'test.mjs');
+  if (!existsSync(join(ROOT, runner))) {
+    bad('测试', `${runner} 不存在`);
   } else {
     try {
-      execFileSync(process.execPath, ['--test', ...testFiles], {
+      execFileSync(process.execPath, [runner], {
         cwd: ROOT,
         stdio: 'pipe',
         encoding: 'utf8',
         maxBuffer: 64 * 1024 * 1024,
       });
-      say(`  4/4 测试：全绿（${testFiles.length} 个文件）`);
+      say('  4/4 测试：全绿');
     } catch (error) {
       const stderr = String(error?.stderr ?? '');
       const stdout = String(error?.stdout ?? '');
       const message = `${stdout}\n${stderr}`.trim();
       if (error?.code === 'EPERM' || /spawn EPERM/.test(message)) {
         // Confined sandboxes forbid the stdio pipes the runner needs.
-        notes.push('测试跳过：当前环境的子进程管道被禁止，请在普通终端或 CI 运行 node --test');
+        notes.push('测试跳过：当前环境的子进程管道被禁止，请在普通终端或 CI 运行 node tools/test.mjs');
         say('  4/4 测试：跳过（沙箱禁止子进程管道）');
       } else {
         const tail = message === '' ? `exit ${error?.status ?? '?'}` : message.split('\n').slice(-15).join('\n');

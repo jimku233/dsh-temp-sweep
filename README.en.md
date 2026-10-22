@@ -161,7 +161,8 @@ Deleting `<DSH_HOME>/temp-sweep` removes all of it. See [SECURITY.md](SECURITY.m
 ## Tests
 
 ```bash
-node --test tests/
+node tools/test.mjs          # same as npm test
+node tools/test.mjs --fork   # per-file isolation via node --test; normal environments only
 ```
 
 34 cases: both rules and their boundaries, protection-window precedence, deletion
@@ -170,8 +171,9 @@ missing roots, drive-root refusal, catch-all refusal, CLI flag validation. Every
 case builds a real tree in a throwaway temp directory and never touches the real
 `%TEMP%`.
 
-(In a confined sandbox `node --test` may fail because the runner needs stdio
-pipes; run the files directly, e.g. `node tests/sweep.test.mjs`.)
+> Do not use `node --test tests/`: Node 22/24 loads `tests` as a module and fails
+> with `MODULE_NOT_FOUND`. The single entry point is `tools/test.mjs` (explicit
+> file list, in-process by default, so it also runs inside a confined sandbox).
 
 ## Release gate
 

@@ -22,7 +22,7 @@ jobs:
       - name: Install (no dependencies to install)
         run: node --version
       - name: Test
-        run: node --test tests/
+        run: node tools/test.mjs
       - name: Release gate (artifacts / secrets / version)
         if: matrix.node == 22
         run: node tools/check-release.mjs --skip-tests
