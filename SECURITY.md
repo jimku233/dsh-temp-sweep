@@ -37,7 +37,7 @@ imports only `node:fs`, `node:os`, `node:path`, `node:url`.
 | Path | Content |
 |---|---|
 | `<DSH_HOME>/temp-sweep/hosts/<pid>-<startedAt>.json` | `pid`, `startedAt`, `writtenAt`. Nothing about the machine, the user, or any Session. |
-| `<DSH_HOME>/temp-sweep/last-run.json` | The last sweep: directory names (random `mkdtemp` codes), sizes, verdict reasons, error strings. |
+| `<DSH_HOME>/temp-sweep/last-run.json` | The last sweep: the temp roots scanned (absolute paths), directory names (random `mkdtemp` codes), sizes, verdict reasons, error strings. |
 
 Both stay on the local disk. Deleting the directory `<DSH_HOME>/temp-sweep`
 removes all of it and costs only one extra conservative sweep.
