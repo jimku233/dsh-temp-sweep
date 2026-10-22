@@ -6,6 +6,17 @@ on:
   pull_request:
   workflow_dispatch:
 
+# 连续推送时取消同分支上未完成的运行，避免排队堆积。
+#
+# 与 workflow-visualizer 的差别：那边是 cancel-in-progress: ${{ github.event_name == 'pull_request' }}，
+# 只在 PR 上取消，main 的每个提交仍各自校验一遍。这个仓库的堆积恰恰发生在 main 的连推上
+# （2026-10-22 连推 4 次，队列排了两轮），所以 main 也取消 —— 被取代的提交本来就会被紧随的
+# 提交覆盖，而标签与 Release 只打在「CI 通过的那个提交」上，校验义务没有丢。
+# 若要回到只在 PR 取消，把下面一行换成上面那个表达式即可。
+concurrency:
+  group: test-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
