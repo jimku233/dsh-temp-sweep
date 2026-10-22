@@ -1,27 +1,23 @@
-# Contributors
+# 贡献者与致谢
 
 ## 作者
 
-| 角色 | 名字 |
-|---|---|
-| 设计与实现、发布 | jimku233 |
+- **jimku233**（GitHub）—— 设计、实现与维护
 
-## 致谢
+## 第三方代码
 
-- **DeepSeek**：`@deepseek-ai/dsh-workspace-changes` 的实现与 README 把「快照怎么写、
-  什么时候删」写得很清楚，本插件的判定规则就是照着那份文档与源码推出来的。
-- **Cordis**：插件生命周期（`apply(ctx, config)` + `ctx.effect`）足够简单，让一个
-  「只在启动和定时做一件事」的插件不必碰任何框架内部。
-- **dsh-copy-file**：本仓库的安装三件套（`install` / `uninstall` / `verify`）、MIT + NOTICE
-  的写法、以及「不改 DSH 安装目录」的原则，沿用了同一个作者另一个包的工程约定。
+**无。** 本包零运行时依赖，没有 vendor 任何代码，只用 Node.js 内建模块：
+`node:fs` / `node:os` / `node:path` / `node:url`。
 
-## 贡献
+判定规则是阅读 `@deepseek-ai/dsh-workspace-changes` 的源码与 README 推导出来的
+（它的目录怎么建、什么时候删、为什么磁盘上查不到 owner），但**没有任何一行代码来自该包**。
 
-欢迎 issue 与 PR。提交前请跑：
+## 参与测试与反馈
 
-```bash
-node --test tests/
-node tools/check-release.mjs
-```
+真实会话试跑、误删风险评估、跨 Host 场景验证都欢迎。提出 issue 或 PR 时请附上：
 
-不接受会放宽删除范围的改动 —— 见 [SECURITY.md](SECURITY.md) 末尾的清单。
+- 你的 `last-run.json`（其中只有随机目录名、体积、判定原因与错误串）；
+- 当时用的是默认配置还是自定义 `patterns` / `maxIdleHours` / `protectMinutes`。
+
+提交前请跑 `node --test tests/` 与 `node tools/check-release.mjs`。
+不接受放宽删除范围的改动 —— 清单见 [SECURITY.md](SECURITY.md)。
