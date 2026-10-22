@@ -9,6 +9,16 @@ import { test } from 'node:test';
 
 import { apply, name, normalizeConfig } from '../lib/index.js';
 
+/**
+ * An absolute temp root for the current platform.
+ *
+ * A Windows path is *relative* on POSIX, so `safeRoots` drops it there — using
+ * `C:\Temp` unconditionally made four tests pass on Windows and fail on the
+ * ubuntu CI legs. These tests are about config handling, not about a specific
+ * platform, so each one takes a root that is absolute wherever it runs.
+ */
+const TEMP_ROOT = process.platform === 'win32' ? 'C:\\Temp' : '/tmp';
+
 test('module exports the Cordis contract', () => {
   assert.equal(name, 'temp-sweep');
   assert.equal(typeof apply, 'function');
@@ -31,19 +41,19 @@ test('normalizeConfig clamps hostile numbers and drops unsafe roots', () => {
     protectMinutes: 100000,
     intervalMinutes: 0,
     maxDeletePerRun: 0,
-    roots: ['C:\\', '/', 'C:\\Temp'],
+    roots: ['C:\\', '/', TEMP_ROOT],
   });
   assert.equal(config.maxIdleHours, 1);
   assert.equal(config.protectMinutes, 24 * 60);
   assert.equal(config.intervalMinutes, 1);
   assert.equal(config.maxDeletePerRun, 1);
-  assert.deepEqual(config.roots, ['C:\\Temp']);
+  assert.deepEqual(config.roots, [TEMP_ROOT]);
 });
 
 test('normalizeConfig honours custom patterns and roots', () => {
-  const config = normalizeConfig({ patterns: ['dsh-spill-*'], roots: ['C:\\Temp'], maxIdleHours: 48 });
+  const config = normalizeConfig({ patterns: ['dsh-spill-*'], roots: [TEMP_ROOT], maxIdleHours: 48 });
   assert.deepEqual(config.patterns, ['dsh-spill-*']);
-  assert.deepEqual(config.roots, ['C:\\Temp']);
+  assert.deepEqual(config.roots, [TEMP_ROOT]);
   assert.equal(config.maxIdleHours, 48);
 });
 
@@ -69,7 +79,7 @@ test('apply registers one disposable interval effect', () => {
     logger: { info() {}, warn() {}, error() {} },
   };
 
-  apply(ctx, { sweepOnStart: false, roots: ['C:\\Temp'], intervalMinutes: 30 });
+  apply(ctx, { sweepOnStart: false, roots: [TEMP_ROOT], intervalMinutes: 30 });
   assert.equal(effectRuns, 1);
   assert.equal(disposed, 0);
 });

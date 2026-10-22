@@ -11,6 +11,9 @@ CI 修复。插件行为未变。
   逐文件隔离模式。`npm test`、CI、`tools/check-release.mjs` 的测试门都改为调用它。
 - 文档同步：README / README.en / AGENTS 不再教 `node --test tests/`，并把这次事故写进
   AGENTS 的「改完必须自证」。
+- **测试**：四处断言把 `C:\Temp` 写死在配置里。它在 POSIX 上是相对路径，会被 `safeRoots`
+  正确丢弃，于是 ubuntu 上 4 例失败（Windows 上全绿）。改为按平台取绝对路径，并补上
+  「POSIX 下 Windows 路径属于相对路径」的显式断言 —— 代码行为未变。
 
 ## 0.1.1 — 2026-10-22
 

@@ -251,11 +251,20 @@ test('sweep tolerates a missing root', async () => {
   assert.equal(summary.errors.length, 0);
 });
 
-test('safeRoots rejects drive roots and bare shares', () => {
-  const accepted = safeRoots(['C:\\Temp', '/tmp', 'C:\\', '', '   ']);
-  assert.ok(accepted.includes('C:\\Temp'));
-  assert.equal(accepted.includes('C:\\'), false);
+test('safeRoots keeps real subdirectories and rejects the rest', () => {
+  const accepted = safeRoots(['/tmp', 'C:\\Temp', 'C:\\', '', '   ']);
+  // "/tmp" is absolute everywhere, including Windows (path.parse gives root "/").
+  assert.ok(accepted.includes('/tmp'));
   assert.equal(accepted.includes(''), false);
+  assert.equal(accepted.includes('   '), false);
+  // "C:\" is a volume root on Windows and a relative path on POSIX; rejected either way.
+  assert.equal(accepted.includes('C:\\'), false);
+  if (process.platform === 'win32') {
+    assert.ok(accepted.includes('C:\\Temp'));
+  } else {
+    // On POSIX a Windows path is relative, so dropping it is the correct behaviour.
+    assert.equal(accepted.includes('C:\\Temp'), false);
+  }
 });
 
 test('safePatterns refuses anything that is not one DSH scratch family', () => {
