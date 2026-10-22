@@ -60,6 +60,15 @@ node tools/check-release.mjs        # 生成物 / 敏感串（含全历史）/ �
 
 版本号两处同步：`package.json` 与 `CHANGELOG.md` 最新一节。`check-release.mjs` 会拦。
 
+**连推会被取消。** 工作流带 `concurrency.group: test-${{ github.ref }}` +
+`cancel-in-progress: true`：同一 ref 只保留最新一次运行，被取代的停在 `cancelled`。
+这不是失败，也不会发告警邮件。因此：
+
+- 只在 **CI 绿的提交** 上打标签与发 Release（`v0.1.2` 打在 `e806770`，就是绿的那个）；
+- 快速连推后看到旧运行变灰、结论 `cancelled` 属预期，不是配置写错；
+- 取消不是瞬时的：可能挂一两分钟才收敛；已经跑完的作业保留 `success`，其余变 `cancelled`；
+- 被取代的提交拿不到完整结论 —— 别对它发版。
+
 ### 1. 仓库描述（直接用）
 
 - 英文：`Reclaim DSH Session scratch residue at Host start: deletes dsh-workspace-changes-* directories that provably belong to a dead Host process.`
