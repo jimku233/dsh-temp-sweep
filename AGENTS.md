@@ -45,6 +45,91 @@ node tools/check-release.mjs       # 四道门：生成物 / 敏感串（含全�
 
 `package.json` 与 `CHANGELOG.md` 最新一节必须同号，`check-release.mjs` 守这一层。
 
+## 发布与上传（下次换仓库照这条走）
+
+### 0. 前置：发布门必须先过
+
+```bash
+node --test tests/
+node tools/check-release.mjs        # 生成物 / 敏感串（含全历史）/ 版本一致 / 测试
+```
+
+版本号两处同步：`package.json` 与 `CHANGELOG.md` 最新一节。`check-release.mjs` 会拦。
+
+### 1. 仓库描述（直接用）
+
+- 英文：`Reclaim DSH Session scratch residue at Host start: deletes dsh-workspace-changes-* directories that provably belong to a dead Host process.`
+- 中文：`在 Host 启动时回收 DSH 会话快照残留：只删那些能证明属于已死 Host 进程的 dsh-workspace-changes-* 目录。`
+
+### 2. topics
+
+```
+dsh, deepseek-harness, cordis, agent-skills, disk-cleanup, windows, temp-directory, nodejs
+```
+
+### 3. public 还是 private
+
+- **默认 public**：与既有仓库（`dsh-copy-file`、`workflow-visualizer`）保持一致。
+- **private 只给两种情况**：还没准备好给人看；或内容涉及客户/真实数据。
+- **public 是不可撤回的**：提交历史一旦公开，删文件也删不掉历史。所以
+  「敏感串含全历史」那道门不能跳 —— 它就是用这个代价换来的。
+- 公开前确认：没有本机绝对路径、没有用户名、没有内网 IP、没有 token。本仓库的
+  `tools/check-release.mjs` 已把这四类做成一等公民。
+
+### 4. 建仓库 + 推送
+
+`gh` 没装也能做。本机凭证在 Windows 凭据管理器（GCM，`gho_` token），
+**不要**把它写进 URL 或提交进任何文件。
+
+```powershell
+$env:GIT_TERMINAL_PROMPT = '0'; $env:GCM_INTERACTIVE = 'never'
+Set-Location <仓库目录>
+
+# 建空仓库（已存在会 422，忽略即可）
+$cred = ("protocol=https`nhost=github.com`n`n" | git -c http.sslBackend=openssl credential fill 2>$null)
+$tok  = ($cred | Select-String '^password=').Line -replace '^password=',''
+$hdr  = @{ Authorization = "token $tok"; 'User-Agent' = 'setup'; Accept = 'application/vnd.github+json' }
+$body = @{ name='<repo>'; description='<上面那句英文>'; private=$false; has_issues=$true; has_wiki=$false } | ConvertTo-Json
+Invoke-RestMethod -Method Post -Uri 'https://api.github.com/user/repos' -Headers $hdr -Body $body -ContentType 'application/json'
+
+# 推送
+git -c http.sslBackend=openssl push -u origin main
+
+# 标签（需要 committer 身份；只写本仓库，别动全局）
+git config user.name '<name>'; git config user.email '<email>'
+git tag -f -a v<版本> -m 'v<版本>: <一句话>'
+git -c http.sslBackend=openssl push origin v<版本>
+
+# topics（Accept 头要 mercy-preview）
+$hdr.Accept = 'application/vnd.github.mercy-preview+json'
+Invoke-RestMethod -Method Put -Uri 'https://api.github.com/repos/<owner>/<repo>/topics' -Headers $hdr `
+  -Body (@{ names=@('dsh','cordis','disk-cleanup','windows') } | ConvertTo-Json) -ContentType 'application/json'
+```
+
+### 5. Release
+
+用 `CHANGELOG.md` 对应小节做 notes，再补一段**实测数字**（没有实测就写“未实测”，别编）：
+
+```powershell
+$body = @' ... '@
+$payload = @{ tag_name='v<版本>'; name='v<版本> — <一句话>'; body=$body; draft=$false; prerelease=$false } | ConvertTo-Json -Depth 5
+Invoke-RestMethod -Method Post -Uri 'https://api.github.com/repos/<owner>/<repo>/releases' -Headers $hdr -Body $payload -ContentType 'application/json'
+```
+
+标签建完才发现内容要补：`git tag -f -a ...` 后 `push --force origin v<版本>`（仅在标签尚未被任何人引用时；
+被引用过就发新补丁版本，别改历史）。
+
+### 6. 卡点对照表（这台机器的真实报错）
+
+| 报错 | 原因 | 处理 |
+|---|---|---|
+| `schannel: AcquireCredentialsHandle failed: SEC_E_NO_CREDENTIALS` | 默认 TLS 后端在这条链路取不到凭证 | 所有 git 网络命令加 `-c http.sslBackend=openssl` |
+| `couldn't create signal pipe, Win32 error 5` | 受限沙箱禁止命名管道，credential helper 的 `sh.exe` 起不来 | 在普通终端跑；或对单条命令临时提权 |
+| `could not read Username for 'https://github.com'` | 没有可用凭证且不允交互 | 确认 GCM 里有 github.com 条目；`GCM_INTERACTIVE=never` 时不会弹 GUI |
+| `Repository not found`（认证已通） | 仓库还没建（GitHub 对无权限/不存在都回 404） | 先按第 4 步建仓库 |
+| `src refspec v0.1.1 does not match any` | 没配 committer 身份，标签没建成 | `git config user.name/email`（本仓库即可）后再打标签 |
+| `Committer identity unknown` | 同上（Git 用主机名兜底成 `user@host.(none)`） | 同上 |
+
 ## 仓库结构
 
 ```
