@@ -1,0 +1,10 @@
+# dsh-temp-sweep bundle patch.
+#
+# One host-only row. It has no client half, no routes, and no UI: it only reclaims
+# temp space left by Session scratch directories whose owning Host process is gone.
+#
+# Tune it in the profile's own cordis.patch.yml (id: temp-sweep) rather than here,
+# so a package upgrade never overwrites your settings.
+- insert:
+    - id: temp-sweep
+      name: dsh-temp-sweep

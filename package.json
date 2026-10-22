@@ -1,0 +1,59 @@
+{
+  "name": "dsh-temp-sweep",
+  "version": "0.1.1",
+  "description": "Reclaim DSH Session scratch residue at Host start: deletes dsh-workspace-changes-* directories that provably belong to a dead Host process, plus a conservative idle fallback.",
+  "license": "MIT",
+  "author": "jimku233",
+  "type": "module",
+  "private": false,
+  "engines": {
+    "node": ">=22.19"
+  },
+  "main": "lib/index.js",
+  "bin": {
+    "dsh-temp-sweep": "bin/sweep.mjs"
+  },
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./sweep": {
+      "default": "./lib/sweep.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "scripts",
+    "cordis.patch.yml",
+    "README.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "LICENSE"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jimku233/dsh-temp-sweep.git"
+  },
+  "homepage": "https://github.com/jimku233/dsh-temp-sweep#readme",
+  "bugs": {
+    "url": "https://github.com/jimku233/dsh-temp-sweep/issues"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test tests/"
+  },
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "cordis",
+    "disk-cleanup",
+    "temp",
+    "windows"
+  ]
+}

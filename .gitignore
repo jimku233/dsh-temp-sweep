@@ -1,0 +1,15 @@
+# Node artifacts
+node_modules/
+*.log
+npm-debug.log*
+
+# Local probes and scratch fixtures used while developing
+_probe/
+.tmp/
+*.tmp
+
+# Editor / OS noise
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

@@ -1,0 +1,36 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+        node: [22, 24]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Install (no dependencies to install)
+        run: node --version
+      - name: Test
+        run: node --test tests/
+      - name: CLI help
+        run: node bin/sweep.mjs --help
+      - name: Refuse a catch-all pattern
+        shell: bash
+        run: |
+          set +e
+          node bin/sweep.mjs --patterns '*' --json > out.txt 2>&1
+          code=$?
+          set -e
+          cat out.txt
+          test $code -ne 0
