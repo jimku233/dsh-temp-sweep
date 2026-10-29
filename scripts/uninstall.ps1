@@ -8,7 +8,7 @@
     the sweep keeps knowing which Hosts are alive.
 
 .PARAMETER Profile
-    Profile name to remove from. Default 'web'.
+    Profile name to remove from. Default: auto-detected ('desktop' or 'web').
 
 .PARAMETER DshHome
     Harness home override. Defaults to $env:DSH_HOME, else ~/.dsh.
@@ -18,7 +18,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string] $Profile = 'web',
+    [string] $Profile,
     [string] $DshHome
 )
 
@@ -39,11 +39,35 @@ function Read-JsonFile([string] $Path) {
     return ($raw | ConvertFrom-Json)
 }
 
+<#
+    Which profile to remove from.
+
+    The Electron build owns 'desktop', the CLI owns 'web'; removing from the
+    wrong one leaves the plugin loaded while reporting success.
+#>
+function Resolve-Profile([string] $Requested) {
+    if ($Requested -and $Requested.Trim() -ne '') { return $Requested.Trim() }
+    $profilesDir = Join-Path (Resolve-DshHome) 'profiles'
+    $desktopManifest = Join-Path (Join-Path $profilesDir 'desktop') 'package.json'
+    if (Test-Path -LiteralPath $desktopManifest) {
+        try {
+            $desktop = Read-JsonFile $desktopManifest
+            $desktopBundles = @()
+            if ($desktop.dsh -and $desktop.dsh.profile -and $desktop.dsh.profile.bundles) {
+                $desktopBundles = @($desktop.dsh.profile.bundles)
+            }
+            if ($desktopBundles -contains '@deepseek-ai/dsh-web-app') { return 'desktop' }
+        } catch { }
+    }
+    return 'web'
+}
+
 function Write-JsonFile([string] $Path, $Value) {
     $json = ($Value | ConvertTo-Json -Depth 32)
     [System.IO.File]::WriteAllText($Path, $json + "`n", (New-Object System.Text.UTF8Encoding($false)))
 }
 
+$Profile = Resolve-Profile $Profile
 $profileDir = Join-Path (Join-Path (Resolve-DshHome) 'profiles') $Profile
 if (-not (Test-Path -LiteralPath $profileDir)) { throw "Profile '$Profile' was not found at $profileDir" }
 

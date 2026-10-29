@@ -7,7 +7,7 @@
     against the real temp roots, and reports the last sweep the Host recorded.
 
 .PARAMETER Profile
-    Profile name to verify. Default 'web'.
+    Profile name to verify. Default: auto-detected ('desktop' or 'web').
 
 .PARAMETER DshHome
     Harness home override. Defaults to $env:DSH_HOME, else ~/.dsh.
@@ -17,7 +17,7 @@
 #>
 [CmdletBinding()]
 param(
-    [string] $Profile = 'web',
+    [string] $Profile,
     [string] $DshHome
 )
 
@@ -40,11 +40,36 @@ function Read-JsonFile([string] $Path) {
     return ($raw | ConvertFrom-Json)
 }
 
+<#
+    Which profile to verify.
+
+    The Electron build owns 'desktop', the CLI owns 'web'; verifying the wrong
+    one reports "package is not installed" for a perfectly good install.
+#>
+function Resolve-Profile([string] $Requested) {
+    if ($Requested -and $Requested.Trim() -ne '') { return $Requested.Trim() }
+    $profilesDir = Join-Path (Resolve-DshHome) 'profiles'
+    $desktopManifest = Join-Path (Join-Path $profilesDir 'desktop') 'package.json'
+    if (Test-Path -LiteralPath $desktopManifest) {
+        try {
+            $desktop = Read-JsonFile $desktopManifest
+            $desktopBundles = @()
+            if ($desktop.dsh -and $desktop.dsh.profile -and $desktop.dsh.profile.bundles) {
+                $desktopBundles = @($desktop.dsh.profile.bundles)
+            }
+            if ($desktopBundles -contains '@deepseek-ai/dsh-web-app') { return 'desktop' }
+        } catch { }
+    }
+    return 'web'
+}
+
 Write-Host "`ndsh-temp-sweep verification" -ForegroundColor White
 
 $dshHomeDir = Resolve-DshHome
+$Profile = Resolve-Profile $Profile
 $profileDir = Join-Path (Join-Path $dshHomeDir 'profiles') $Profile
 $targetDir = Join-Path (Join-Path $profileDir 'node_modules') $PackageName
+Write-Step "profile      : $profileDir"
 
 if (-not (Test-Path -LiteralPath (Join-Path $targetDir 'package.json'))) {
     Write-Bad "package is not installed at $targetDir"
@@ -73,7 +98,7 @@ if (Test-Path -LiteralPath $cli) {
         $summary = $json | ConvertFrom-Json
         Write-Ok "scanned $($summary.scanned); would delete $($summary.deleted.Count); keep $($summary.kept.Count)"
         foreach ($item in $summary.deleted) {
-            Write-Host ("       would delete {0} ({1}) — {2}" -f $item.name, $item.reason, ('{0:N1} MB' -f ($item.bytes / 1MB))) -ForegroundColor Yellow
+            Write-Host ("       would delete {0} ({1}) -- {2}" -f $item.name, $item.reason, ('{0:N1} MB' -f ($item.bytes / 1MB))) -ForegroundColor Yellow
         }
         if ($summary.deleted.Count -eq 0) {
             Write-Step 'nothing to reclaim right now (expected after a clean start)'

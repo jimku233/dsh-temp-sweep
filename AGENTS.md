@@ -14,8 +14,10 @@
    每个只有 `objects\xx\<40位sha1>`。不是这个形态就别动 —— 见 README「它治什么」。
 2. **只读预检**：`node bin/sweep.mjs`（默认 dry run，不删任何东西）。
 3. **安装**：`powershell -ExecutionPolicy Bypass -File scripts/install.ps1`。
-   写 `~/.dsh/profiles/<profile>`，**必须在 dsh 沙箱之外执行**；`patchReload: live` 的 profile
-   会即时生效，其余需重启。
+   写 `~/.dsh/profiles/<profile>`，**必须在 dsh 沙箱之外执行**。profile **自动探测**：
+   Electron 版（`profiles\desktop` 且含 `@deepseek-ai/dsh-web-app`）用 `desktop`，否则 `web` ——
+   装错 profile 的表现就是「装完什么都没发生」。`desktop` 由应用独占，其
+   `--dump-config` 必然报 `managed exclusively`（预期），装完需退出应用再启动。
 4. **验证**：`scripts/verify.ps1`；或看 `<DSH_HOME>/temp-sweep/last-run.json`。
 
 ## 不要做的事（硬约束）

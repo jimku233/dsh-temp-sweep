@@ -60,6 +60,12 @@ Requires Node 22.19+ and a profile that has been started once.
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
+**The target profile is auto-detected.** With no `-Profile`, the installer uses
+`desktop` when `profiles\desktop` exists and carries `@deepseek-ai/dsh-web-app`
+(the Electron build), otherwise `web`. Installing into the wrong profile looks
+exactly like "nothing happened", so do not force `-Profile web` on the Electron
+build.
+
 The installer copies the package into the profile's `node_modules`, adds
 `dsh-temp-sweep` to `dsh.profile.bundles`, and records the pre-install manifest so
 uninstall can restore it. **It never edits the DSH installation.** The package has
@@ -68,13 +74,26 @@ no runtime dependencies — only `node:` built-ins.
 > Run it outside the dsh sandbox: it writes under `~/.dsh`, which a
 > workspace-write sandbox refuses.
 
+### The desktop profile (Electron build, DSH 0.2.1+)
+
+`desktop` is managed exclusively by the application, so this always fails:
+
+```
+error: profile "desktop" is managed exclusively by the Electron application
+```
+
+That is expected and does not mean the install failed. The installer classifies it
+as "managed by the application" and tells you to **quit the app completely and
+start it again** — the plugin loads at app startup.
+
 ### Does it need a restart?
 
-Depends on the profile's `patchReload`:
+Depends on the profile kind and its `patchReload`:
 
-- `live` (DSH default): **no restart**. On a live-reload profile the plugin loaded
-  and finished its first sweep seconds after the installer exited (11 directories
-  → 4, 7.08 GB reclaimed, measured).
+- `desktop` (Electron build): **quit and relaunch the app**; the plugin loads at startup.
+- A CLI profile with `patchReload: live`: **no restart**. On a live-reload profile the
+  plugin loaded and finished its first sweep seconds after the installer exited
+  (11 directories → 4, 7.08 GB reclaimed, measured).
 - Anything else: restart the Host so the new bundle row is composed in.
 
 Two things remain true either way:

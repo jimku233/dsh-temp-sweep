@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.3 — 2026-10-29
+
+适配 DSH 0.2.1-rc.3（Electron 安装包，`desktop` profile）。**插件运行时逻辑一行未改**：
+在 0.2.1-rc.3 上已实测加载并清扫（`last-run.json` 有 2026-10-29 19:30 的 startup 记录）。
+
+- **安装目标自动探测**：不传 `-Profile` 时，`profiles\desktop` 存在且含
+  `@deepseek-ai/dsh-web-app` 就用 `desktop`，否则回退 `web`。此前默认写死 `web`，在 Electron
+  版上会把包装进一个不再使用的 profile，用户看到的现象是「装完什么都没发生」。
+- **`dump-config` 的独占拒绝被正确分类**：`desktop` 由应用独占管理，
+  `dsh --profile desktop --dump-config` 必然报 `managed exclusively`。此前它落到 `catch`
+  分支并提示「重启 dsh」；现在识别为预期结果，提示「完全退出应用再启动」。为此在调用前后
+  临时放宽 `$ErrorActionPreference` —— PS 5.1 会把重定向的 stderr 当终止错误。
+- **`verify.ps1` / `uninstall.ps1` 同样自动探测 profile**；`verify.ps1` 里一处 em dash 换成
+  ASCII，三个脚本现在都是纯 ASCII，在只有 PowerShell 5.1、无 BOM 的机器上也能解析。
+- 文档：README / README.en / SKILL / AGENTS 补 `desktop` profile 与自动探测说明。
+
 ## 0.1.2 — 2026-10-22
 
 CI 修复。插件行为未变。

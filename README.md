@@ -55,17 +55,33 @@
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
+**装到哪个 profile 是自动探测的**：不传 `-Profile` 时，若 `profiles\desktop` 存在且含
+`@deepseek-ai/dsh-web-app`（Electron 安装包）就用 `desktop`，否则回退 `web`。装错 profile 的
+表现是「装完什么都没发生」，所以别手写 `-Profile web` 去装 Electron 版。
+
 安装脚本只做三件事：把包复制进 profile 的 `node_modules`、把 `dsh-temp-sweep` 加进
 `dsh.profile.bundles`、记录安装前的 manifest 以便卸载还原。**它不改 DSH 安装目录。**
 包本身没有运行时依赖（只用 node 内置模块），不需要 npm/pnpm 安装步骤。
 
 > 必须在 dsh 沙箱之外运行：它写的是 `~/.dsh`，workspace-write 沙箱会拒绝。
 
+### desktop profile（Electron 版，DSH 0.2.1 起）
+
+`desktop` 由**应用独占管理**，所以 `dsh --profile desktop --dump-config` 必然报：
+
+```
+error: profile "desktop" is managed exclusively by the Electron application
+```
+
+这是预期结果，不代表装失败：安装脚本会把它识别成「由应用托管」，并提示你
+**完全退出应用再启动**（插件在应用启动时加载）。
+
 ### 装完是否要重启
 
-看 profile 的 `patchReload`：
+看 profile 的类型与 `patchReload`：
 
-- `live`（DSH 默认）：**即时生效，不用重启**。实测在 `patchReload: live` 的 web profile 上，
+- `desktop`（Electron 版）：**退出应用再启动**，插件在启动时加载。
+- `patchReload: live` 的 CLI profile：**即时生效，不用重启**。实测在 web profile 上，
   安装脚本跑完几秒内插件就加载并完成了第一次清扫（11 个目录 → 4 个，回收 7.08 GB）。
 - 其他值：需要重启 Host，新的 bundle 行才会被组合进去。
 

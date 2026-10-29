@@ -27,7 +27,7 @@ whenToUse: 用户想把 DSH 快照残留清理自动化、询问插件安装/验
 
 ## 安装前必须确认
 
-- Node 22.19+、`dsh` 版本 0.2.0-rc.2（其他版本未验证）。
+- Node 22.19+；DSH 0.2.0-rc.2 与 0.2.1-rc.3（Electron 版）均已实测可用。
 - 目标 profile 已经启动过一次（`~/.dsh/profiles/<profile>` 存在）。
 - **必须在 dsh 沙箱之外执行**：安装写 `~/.dsh/profiles/<profile>`，workspace-write 沙箱会拒绝。
   先向用户说明再动，不要在会话里尝试提权绕过。
@@ -38,13 +38,20 @@ whenToUse: 用户想把 DSH 快照残留清理自动化、询问插件安装/验
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
 
+**不要手写 `-Profile`**：脚本自动探测——`profiles\desktop` 存在且含
+`@deepseek-ai/dsh-web-app`（Electron 版）就用 `desktop`，否则用 `web`。装错 profile 的表现
+是「装完什么都没发生」。
+
 脚本只做三件事：复制包进 profile 的 `node_modules`、把 `dsh-temp-sweep` 加进
 `dsh.profile.bundles`（插在带 UI patch 的包之前）、记录安装前 manifest 以便卸载。
 它**不改** DSH 安装目录。
 
-装完通常**不需要重启**：profile 的 `patchReload: live`（DSH 默认）会在几秒内加载插件并完成
-第一次清扫。需要重启的只有两种情况：profile 没有 live reload；或者是在**升级**已经加载过的
-旧版本（内存里的旧代码不会被替换）。
+`desktop` 由应用独占管理，`dsh --profile desktop --dump-config` 必然报
+`managed exclusively` —— 属预期，脚本会识别并提示「完全退出应用再启动」。
+
+装完通常**不需要重启**：`desktop` 需退出应用再启动；`patchReload: live` 的 CLI profile 会在
+几秒内加载插件并完成第一次清扫。需要重启的只有两种情况：profile 没有 live reload；或者是在
+**升级**已经加载过的旧版本（内存里的旧代码不会被替换）。
 
 不要被「升级前就在跑的 Host 没有标记」吓住：插件写标记时用 `process.uptime()` 反推 Host 的
 真实启动时间，所以晚加载也能正确判断「谁在加载前就已经死了」。
