@@ -9,6 +9,13 @@ become "yesterday".
 [temp-sweep] reclaimed 39.25 GiB from 32 scratch directories (startup); kept 8
 ```
 
+**Compatibility is a contract, not a version number.** This is a Host plugin, so it depends on
+three upstream contracts only: the scratch directory prefix `dsh-workspace-changes-`, the Host
+marker fields (pid / startedAt), and `session/disposed` cleanup semantics. While those hold, an
+upgrade needs no code change — verified on `0.2.0-rc.2` / `0.2.1-rc.3` / `0.2.2-rc.5`, where the
+0.2.2-rc.5 upgrade ran **without touching a line** and `~/.dsh/temp-sweep/last-run.json` kept
+being written on every Host start.
+
 ## What it fixes, and what it does not
 
 | | Content | Owner |

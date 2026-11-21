@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.4 — 2026-11-21
+
+文档改动，运行时一行未改：把"实测过的版本清单"换成"兼容判据"。
+
+### Changed
+
+- `SKILL.md` 与 `README.md` / `README.en.md` 不再把支持范围写成 DSH 版本列表。这是 Host 插件，
+  与客户端 bundle 无关；能不能用取决于三条上游契约（scratch 目录前缀、Host marker 字段、
+  `session/disposed` 语义），而不是版本号。读者不用等新版本就能判断自己能不能用。
+- 补上 0.2.2-rc.5 的实测记录。
+
+### Verified
+
+- 0.2.2-rc.5（桌面版）升级后未改一行代码，`~/.dsh/temp-sweep/last-run.json` 于
+  2026-11-21 18:38 记录了一次 `startup` 清扫，Host marker 为 pid 2212。
+
 ## 0.1.3 — 2026-10-29
 
 适配 DSH 0.2.1-rc.3（Electron 安装包，`desktop` profile）。**插件运行时逻辑一行未改**：

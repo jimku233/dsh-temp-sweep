@@ -10,6 +10,11 @@
 实测（Windows 11 / DSH 0.2.0-rc.2 / `patchReload: live`）：装完即时生效，第一次清扫把
 11 个目录降到 4 个，回收 **7.08 GB**，C 盘可用从 38.8 GB 到 45.9 GB。
 
+**兼容性是判据，不是版本号。** 它是 Host 插件，只依赖三条上游契约：scratch 目录前缀
+`dsh-workspace-changes-`、Host 标记的字段（pid / startedAt）、`session/disposed` 的清理语义。
+这三条不变，跨多少个版本都不用改代码 —— 已在 `0.2.0-rc.2` / `0.2.1-rc.3` / `0.2.2-rc.5` 上验证：
+升级到 0.2.2-rc.5 后**一行未改**，`~/.dsh/temp-sweep/last-run.json` 仍在每次 Host 启动时写入。
+
 ## 它治什么，不治什么
 
 | | 内容 | 谁负责 |

@@ -27,7 +27,10 @@ whenToUse: 用户想把 DSH 快照残留清理自动化、询问插件安装/验
 
 ## 安装前必须确认
 
-- Node 22.19+；DSH 0.2.0-rc.2 与 0.2.1-rc.3（Electron 版）均已实测可用。
+- Node 22.19+。这是 **Host 插件**，不碰客户端 bundle，所以跨 DSH 小版本不需要适配。
+  已在 `0.2.0-rc.2` / `0.2.1-rc.3` / `0.2.2-rc.5` 实测。需要重新适配的判据只有三条：
+  scratch 目录前缀（`dsh-workspace-changes-`）、Host 标记字段（pid / startedAt）、
+  `session/disposed` 的清理语义 —— 任一改变才要改代码，版本号本身不是判据。
 - 目标 profile 已经启动过一次（`~/.dsh/profiles/<profile>` 存在）。
 - **必须在 dsh 沙箱之外执行**：安装写 `~/.dsh/profiles/<profile>`，workspace-write 沙箱会拒绝。
   先向用户说明再动，不要在会话里尝试提权绕过。
