@@ -89,8 +89,19 @@ if ($bundles -contains $PackageName) {
 
 $targetDir = Join-Path (Join-Path $profileDir 'node_modules') $PackageName
 if (Test-Path -LiteralPath $targetDir) {
-    Remove-Item -LiteralPath $targetDir -Recurse -Force
-    Write-Ok "removed $targetDir"
+    $dshCmd = Get-Command dsh -ErrorAction SilentlyContinue
+    if ($dshCmd) {
+        $previous = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        try { $null = (& dsh plugin --profile $Profile remove $PackageName 2>&1) } finally { $ErrorActionPreference = $previous }
+    }
+    if (Test-Path -LiteralPath $targetDir) {
+        # A copy-installed leftover has no dependency entry; delete it directly.
+        Remove-Item -LiteralPath $targetDir -Recurse -Force
+        Write-Ok "removed $targetDir"
+    } else {
+        Write-Ok "unregistered '$PackageName' from the profile"
+    }
 } else {
     Write-Step 'package directory was already gone'
 }

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.5 — 2026-11-22
+
+### Changed
+
+- **安装方式改成登记依赖，不再往 `node_modules` 里拷文件。** `install.ps1` 现在调用
+  `dsh plugin --profile <name> add <本目录>`，在 profile 里写一条 `link:` 依赖；`uninstall.ps1`
+  对应 `dsh plugin remove`（遇到旧的拷贝式安装会退回直接删目录）。
+- 原因：拷贝式安装活不过一次 `pnpm install` —— 插件页装别的插件时，pnpm 会把不在
+  `dependencies` 里的包清掉。2026-11-22 19:00 装了 `dsh-plugin-grill-me` 之后，本插件和
+  `dsh-copy-file-icon` 同时消失，插件页报 `cannot resolve profile bundle`。
+- 因为改成了 `link:`，仓库目录就是安装源：改代码后**重启应用即可生效，不用重装**。
+
 ## 0.1.4 — 2026-11-21
 
 文档改动，运行时一行未改：把"实测过的版本清单"换成"兼容判据"。
